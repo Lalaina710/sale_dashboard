@@ -169,7 +169,7 @@
                                 <span class="float-end text-muted" style="font-size:0.85rem;">
                                     <t t-esc="state.filters.recent_days"/>j:
                                     <strong t-esc="state.data.recent_order_count"/> cmd
-                                    / <strong t-esc="formatAmount(state.data.recent_ca)"/> DH
+                                    / <strong t-esc="formatAmount(state.data.recent_ca)"/>
                                 </span>
                             </div>
                             <div class="chart-container">

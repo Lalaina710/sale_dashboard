@@ -150,7 +150,15 @@ class SaleDashboardController(http.Controller):
         # Config pour le frontend
         config = request.env['sale.dashboard.config'].get_config()
 
+        # Devise de la société
+        currency = request.env.company.currency_id
+        currency_info = {
+            'symbol': currency.symbol or '',
+            'position': currency.position or 'after',
+        }
+
         return {
+            'currency': currency_info,
             'state_counts': state_counts,
             'to_invoice_count': to_invoice_count,
             'late_count': late_count,

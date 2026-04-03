@@ -173,11 +173,18 @@ class SaleDashboard extends Component {
     // --- Formatage et helpers ---
 
     formatAmount(amount) {
-        if (!amount) return "0,00";
-        return Number(amount).toLocaleString("fr-FR", {
+        if (!amount && amount !== 0) return "0,00";
+        const formatted = Number(amount).toLocaleString("fr-FR", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
+        const cur = this.state.data.currency || {};
+        const symbol = cur.symbol || '';
+        if (!symbol) return formatted;
+        if (cur.position === 'before') {
+            return symbol + ' ' + formatted;
+        }
+        return formatted + ' ' + symbol;
     }
 
     formatQty(qty) {
