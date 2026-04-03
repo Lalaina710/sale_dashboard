@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="sale_dashboard.SaleDashboard">
+        <div class="sale_dashboard">
+            <!-- Header avec contrôles -->
+            <div class="db-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="db-title mb-0">Tableau de bord Ventes</h1>
+                    <div class="db-controls">
+                        <span class="db-last-update" t-if="state.lastUpdate">
+                            <i class="fa fa-clock-o"/> <t t-esc="state.lastUpdate"/>
+                        </span>
+
+                        <!-- Auto-refresh -->
+                        <select class="db-select"
+                                t-on-change="(ev) => this.onRefreshIntervalChange(ev)">
+                            <option value="0" t-att-selected="state.autoRefreshInterval === 0 ? 'selected' : undefined">
+                                Auto: Off
+                            </option>
+                            <option value="30" t-att-selected="state.autoRefreshInterval === 30 ? 'selected' : undefined">
+                                30s
+                            </option>
+                            <option value="60" t-att-selected="state.autoRefreshInterval === 60 ? 'selected' : undefined">
+                                1 min
+                            </option>
+                            <option value="120" t-att-selected="state.autoRefreshInterval === 120 ? 'selected' : undefined">
+                                2 min
+                            </option>
+                            <option value="300" t-att-selected="state.autoRefreshInterval === 300 ? 'selected' : undefined">
+                                5 min
+                            </option>
+                        </select>
+
+                        <button t-attf-class="btn-filter {{ hasActiveFilters() ? 'active' : '' }}"
+                                t-on-click="toggleFilters">
+                            <i class="fa fa-filter"/>
+                            Filtres
+                            <span class="filter-dot" t-if="hasActiveFilters()"/>
+                        </button>
+
+                        <button class="btn-refresh" t-on-click="() => this.loadData()">
+                            <i class="fa fa-refresh"/> Actualiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panneau de filtres (collapsible) -->
+                <div class="db-filters-panel" t-if="state.showFilters">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>Date début</label>
+                            <input type="date" class="filter-input"
+                                   t-att-value="state.filters.date_from"
+                                   t-on-change="(ev) => this.onFilterChange('date_from', ev)"/>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date fin</label>
+                            <input type="date" class="filter-input"
+                                   t-att-value="state.filters.date_to"
+                                   t-on-change="(ev) => this.onFilterChange('date_to', ev)"/>
+                        </div>
+                        <div class="filter-group">
+                            <label>Commercial</label>
+                            <select class="filter-input"
+                                    t-on-change="(ev) => this.onFilterChange('user_id', ev)">
+                                <option value="0">-- Tous --</option>
+                                <t t-foreach="state.salespersons" t-as="user" t-key="user.id">
+                                    <option t-att-value="user.id"
+                                            t-att-selected="state.filters.user_id === user.id ? 'selected' : undefined">
+                                        <t t-esc="user.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Client</label>
+                            <select class="filter-input"
+                                    t-on-change="(ev) => this.onFilterChange('partner_id', ev)">
+                                <option value="0">-- Tous --</option>
+                                <t t-foreach="state.partners" t-as="partner" t-key="partner.id">
+                                    <option t-att-value="partner.id"
+                                            t-att-selected="state.filters.partner_id === partner.id ? 'selected' : undefined">
+                                        <t t-esc="partner.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Jours graphique</label>
+                            <select class="filter-input"
+                                    t-on-change="(ev) => this.onFilterChange('chart_days', ev)">
+                                <option value="7" t-att-selected="state.filters.chart_days === 7 ? 'selected' : undefined">7 jours</option>
+                                <option value="14" t-att-selected="state.filters.chart_days === 14 ? 'selected' : undefined">14 jours</option>
+                                <option value="30" t-att-selected="state.filters.chart_days === 30 ? 'selected' : undefined">30 jours</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Période stats</label>
+                            <select class="filter-input"
+                                    t-on-change="(ev) => this.onFilterChange('recent_days', ev)">
+                                <option value="7" t-att-selected="state.filters.recent_days === 7 ? 'selected' : undefined">7 jours</option>
+                                <option value="30" t-att-selected="state.filters.recent_days === 30 ? 'selected' : undefined">30 jours</option>
+                                <option value="60" t-att-selected="state.filters.recent_days === 60 ? 'selected' : undefined">60 jours</option>
+                                <option value="90" t-att-selected="state.filters.recent_days === 90 ? 'selected' : undefined">90 jours</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filters-actions">
+                        <button class="btn-apply" t-on-click="applyFilters">
+                            <i class="fa fa-check"/> Appliquer
+                        </button>
+                        <button class="btn-reset" t-on-click="resetFilters">
+                            <i class="fa fa-times"/> Réinitialiser
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <t t-if="state.loading">
+                <div class="loading">
+                    <i class="fa fa-spinner fa-spin fa-2x me-2"/> Chargement...
+                </div>
+            </t>
+
+            <t t-else="">
+                <!-- KPI Cards -->
+                <div class="kpi-row">
+                    <div class="kpi-card draft" t-on-click="() => this.openOrders('draft')">
+                        <div class="kpi-value" t-esc="state.data.state_counts.draft || 0"/>
+                        <div class="kpi-label">Devis</div>
+                    </div>
+                    <div class="kpi-card sent" t-on-click="() => this.openOrders('sent')">
+                        <div class="kpi-value" t-esc="state.data.state_counts.sent || 0"/>
+                        <div class="kpi-label">Envoyés</div>
+                    </div>
+                    <div class="kpi-card confirmed" t-on-click="() => this.openOrders('sale')">
+                        <div class="kpi-value" t-esc="state.data.state_counts.sale || 0"/>
+                        <div class="kpi-label">Confirmées</div>
+                    </div>
+                    <div class="kpi-card to_invoice" t-on-click="() => this.openToInvoice()">
+                        <div class="kpi-value" t-esc="state.data.to_invoice_count || 0"/>
+                        <div class="kpi-label">A facturer</div>
+                    </div>
+                    <div class="kpi-card done" t-on-click="() => this.openOrders('done')">
+                        <div class="kpi-value" t-esc="state.data.state_counts.done || 0"/>
+                        <div class="kpi-label">Verrouillées</div>
+                    </div>
+                    <div class="kpi-card cancel" t-on-click="() => this.openOrders('cancel')">
+                        <div class="kpi-value" t-esc="state.data.state_counts.cancel || 0"/>
+                        <div class="kpi-label">Annulées</div>
+                    </div>
+                    <div class="kpi-card late" t-on-click="() => this.openLateOrders()">
+                        <div class="kpi-value" t-esc="state.data.late_count || 0"/>
+                        <div class="kpi-label">En retard</div>
+                    </div>
+                    <div class="kpi-card ca_month">
+                        <div class="kpi-value" t-esc="formatAmount(state.data.ca_month)"/>
+                        <div class="kpi-label">CA ce mois</div>
+                    </div>
+                </div>
+
+                <div class="db-columns">
+                    <!-- Sales chart + Top products -->
+                    <div class="db-col">
+                        <div class="db-section">
+                            <div class="db-section-title">
+                                <i class="fa fa-bar-chart me-2"/>
+                                Ventes <t t-esc="state.filters.chart_days"/> derniers jours
+                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                    <t t-esc="state.filters.recent_days"/>j:
+                                    <strong t-esc="state.data.recent_order_count"/> cmd
+                                    / <strong t-esc="formatAmount(state.data.recent_ca)"/> DH
+                                </span>
+                            </div>
+                            <div class="chart-container">
+                                <div class="bar-chart">
+                                    <t t-foreach="state.data.daily_sales" t-as="day" t-key="day.date">
+                                        <div class="bar-group">
+                                            <div class="bar-value" t-esc="formatAmount(day.amount)"/>
+                                            <div class="bar"
+                                                 t-attf-style="height: {{ getBarHeight(day.amount) }}px"/>
+                                            <div class="bar-label" t-esc="day.date"/>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top 10 products -->
+                        <div class="db-section">
+                            <div class="db-section-title">
+                                <i class="fa fa-trophy me-2"/>Top 10 produits vendus
+                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                    Période : <t t-esc="state.filters.recent_days"/> jours
+                                </span>
+                            </div>
+                            <t t-if="state.data.top_products.length">
+                                <table class="mo-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Produit</th>
+                                            <th class="text-end">Qté</th>
+                                            <th class="text-end">Montant</th>
+                                            <th class="text-end">Lignes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.data.top_products" t-as="prod" t-key="prod.product_id">
+                                            <tr>
+                                                <td t-esc="prod_index + 1"/>
+                                                <td t-esc="prod.product_name"/>
+                                                <td class="text-end" t-esc="formatQty(prod.qty)"/>
+                                                <td class="text-end" t-esc="formatAmount(prod.amount)"/>
+                                                <td class="text-end" t-esc="prod.count"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="text-muted text-center p-3">Aucune vente sur la période</div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Active orders table -->
+                    <div class="db-col">
+                        <div class="db-section">
+                            <div class="db-section-title">
+                                <i class="fa fa-shopping-cart me-2"/>Commandes actives
+                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                    <t t-esc="state.data.active_orders.length"/> affichées
+                                </span>
+                            </div>
+                            <t t-if="state.data.active_orders.length">
+                                <table class="mo-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Référence</th>
+                                            <th>Client</th>
+                                            <th class="text-end">Montant</th>
+                                            <th>État</th>
+                                            <th>Facturation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.data.active_orders" t-as="order" t-key="order.id">
+                                            <tr t-on-click="() => this.openOrder(order.id)">
+                                                <td t-esc="order.name"/>
+                                                <td t-esc="order.partner_id[1]"/>
+                                                <td class="text-end" t-esc="formatAmount(order.amount_total)"/>
+                                                <td>
+                                                    <span t-attf-class="badge-state badge-{{ order.state }}">
+                                                        <t t-esc="getStateLabel(order.state)"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span t-attf-class="badge-invoice badge-{{ getInvoiceStatusClass(order.invoice_status) }}">
+                                                        <t t-esc="getInvoiceStatusLabel(order.invoice_status)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="text-muted text-center p-4">
+                                    <i class="fa fa-check-circle fa-2x mb-2 d-block text-success"/>
+                                    Aucune commande active
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>
