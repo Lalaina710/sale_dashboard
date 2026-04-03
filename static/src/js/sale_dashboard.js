@@ -14,7 +14,17 @@ class SaleDashboard extends Component {
         this.action = useService("action");
         this.state = useState({
             loading: true,
-            data: {},
+            data: {
+                state_counts: {},
+                to_invoice_count: 0,
+                late_count: 0,
+                ca_month: 0,
+                daily_sales: [],
+                active_orders: [],
+                recent_order_count: 0,
+                recent_ca: 0,
+                top_products: [],
+            },
             // Filtres dynamiques
             filters: {
                 chart_days: 7,
@@ -72,7 +82,7 @@ class SaleDashboard extends Component {
             this.state.salespersons = data.salespersons || [];
             this.state.partners = data.partners || [];
         } catch (e) {
-            console.warn("Impossible de charger les filtres:", e);
+            console.error("Sale Dashboard - Erreur chargement filtres:", e);
         }
     }
 

@@ -123,30 +123,29 @@ class SaleDashboardController(http.Controller):
 
         # Top 10 produits vendus (période récente)
         SOL = request.env['sale.order.line']
-        top_products_data = SOL.read_group(
-            [
-                ('order_id.state', 'in', ['sale', 'done']),
-                ('order_id.date_order', '>=', date_n_ago.strftime('%Y-%m-%d')),
-            ] + (
-                [('order_id.user_id', '=', user_id)] if user_id else []
-            ) + (
-                [('order_id.partner_id', '=', partner_id)] if partner_id else []
-            ),
-            fields=['product_id', 'product_uom_qty', 'price_subtotal'],
-            groupby=['product_id'],
-            orderby='price_subtotal desc',
-            limit=10,
-        )
-        top_products = [
-            {
-                'product_id': p['product_id'][0],
-                'product_name': p['product_id'][1],
-                'qty': p['product_uom_qty'],
-                'amount': round(p['price_subtotal'], 2),
-                'count': p['__count'],
-            }
-            for p in top_products_data if p['product_id']
-        ]
+        top_products = []
+        recent_so_ids = SO.search(base_domain + [
+            ('state', 'in', ['sale', 'done']),
+            ('date_order', '>=', date_n_ago.strftime('%Y-%m-%d')),
+        ]).ids
+        if recent_so_ids:
+            top_products_data = SOL.read_group(
+                [('order_id', 'in', recent_so_ids)],
+                fields=['product_id', 'product_uom_qty', 'price_subtotal'],
+                groupby=['product_id'],
+                orderby='price_subtotal desc',
+                limit=10,
+            )
+            top_products = [
+                {
+                    'product_id': p['product_id'][0],
+                    'product_name': p['product_id'][1],
+                    'qty': p['product_uom_qty'],
+                    'amount': round(p['price_subtotal'], 2),
+                    'count': p.get('__count', p.get('product_id_count', 0)),
+                }
+                for p in top_products_data if p['product_id']
+            ]
 
         # Config pour le frontend
         config = request.env['sale.dashboard.config'].get_config()

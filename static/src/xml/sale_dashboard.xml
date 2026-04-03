@@ -248,7 +248,7 @@
                                         <t t-foreach="state.data.active_orders" t-as="order" t-key="order.id">
                                             <tr t-on-click="() => this.openOrder(order.id)">
                                                 <td t-esc="order.name"/>
-                                                <td t-esc="order.partner_id[1]"/>
+                                                <td t-esc="order.partner_id ? order.partner_id[1] : '-'"/>
                                                 <td class="text-end" t-esc="formatAmount(order.amount_total)"/>
                                                 <td>
                                                     <span t-attf-class="badge-state badge-{{ order.state }}">
