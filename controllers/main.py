@@ -1,12 +1,15 @@
 from odoo import http
 from odoo.http import request
 from datetime import datetime, timedelta
+from werkzeug.exceptions import Forbidden
 
 
 class SaleDashboardController(http.Controller):
 
     @http.route('/sale_dashboard/data', type='json', auth='user')
     def get_dashboard_data(self, **kwargs):
+        if not request.env.user.has_group('sale_dashboard.group_sale_dashboard_user'):
+            raise Forbidden("Accès non autorisé au dashboard vente")
         SO = request.env['sale.order']
 
         # Récupérer les paramètres dynamiques (filtres du frontend)
@@ -164,6 +167,8 @@ class SaleDashboardController(http.Controller):
     @http.route('/sale_dashboard/filters_data', type='json', auth='user')
     def get_filters_data(self):
         """Retourne les données pour les listes déroulantes des filtres."""
+        if not request.env.user.has_group('sale_dashboard.group_sale_dashboard_user'):
+            raise Forbidden("Accès non autorisé au dashboard vente")
         # Commerciaux ayant des commandes
         users = request.env['sale.order'].read_group(
             [('user_id', '!=', False)],

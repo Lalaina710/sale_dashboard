@@ -1,3 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sale_dashboard_config_user,sale.dashboard.config.user,model_sale_dashboard_config,sales_team.group_sale_salesman,1,0,0,0
-access_sale_dashboard_config_manager,sale.dashboard.config.manager,model_sale_dashboard_config,sales_team.group_sale_manager,1,1,1,1
+access_sale_dashboard_config_user,sale.dashboard.config.user,model_sale_dashboard_config,sale_dashboard.group_sale_dashboard_user,1,0,0,0
+access_sale_dashboard_config_manager,sale.dashboard.config.manager,model_sale_dashboard_config,sale_dashboard.group_sale_dashboard_manager,1,1,1,1

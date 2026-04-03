@@ -48,5 +48,5 @@
         parent="sale.menu_sale_config"
         action="action_sale_dashboard_config"
         sequence="100"
-        groups="sales_team.group_sale_manager"/>
+        groups="sale_dashboard.group_sale_dashboard_manager"/>
 </odoo>
