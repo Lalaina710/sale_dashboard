@@ -58,17 +58,37 @@ class SaleDashboardController(http.Controller):
             ('commitment_date', '<', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
         ])
 
-        # CA ce mois
+        # Total BC (Bons de Commande)
         today = datetime.now()
         month_start = today.replace(day=1, hour=0, minute=0, second=0)
-        month_orders = SO.search_read(
-            base_domain + [
-                ('state', 'in', ['sale', 'done']),
-                ('date_order', '>=', month_start.strftime('%Y-%m-%d %H:%M:%S')),
-            ],
-            fields=['amount_total'],
+        bc_domain = base_domain + date_domain + [
+            ('state', 'in', ['sale', 'done']),
+        ]
+        month_orders = SO.search_read(bc_domain, fields=['amount_total'])
+        bc_month = sum(o['amount_total'] for o in month_orders)
+
+        # Facturation Vente ce mois (factures clients, payé et non payé)
+        Invoice = request.env['account.move']
+        invoice_domain = [
+            ('move_type', '=', 'out_invoice'),
+            ('state', '=', 'posted'),
+        ]
+        if date_from:
+            invoice_domain.append(('invoice_date', '>=', date_from))
+        else:
+            invoice_domain.append(('invoice_date', '>=', month_start.strftime('%Y-%m-%d')))
+        if date_to:
+            invoice_domain.append(('invoice_date', '<=', date_to))
+        if user_id:
+            invoice_domain.append(('invoice_user_id', '=', user_id))
+        if partner_id:
+            invoice_domain.append(('partner_id', '=', partner_id))
+        all_invoices = Invoice.search_read(
+            invoice_domain,
+            fields=['amount_total', 'payment_state'],
         )
-        ca_month = sum(o['amount_total'] for o in month_orders)
+        sale_paid = sum(inv['amount_total'] for inv in all_invoices if inv['payment_state'] in ('paid', 'in_payment'))
+        sale_unpaid = sum(inv['amount_total'] for inv in all_invoices if inv['payment_state'] not in ('paid', 'in_payment'))
 
         # Ventes des N derniers jours (pour stats récapitulatives)
         date_n_ago = datetime.now() - timedelta(days=recent_days)
@@ -162,7 +182,12 @@ class SaleDashboardController(http.Controller):
             'state_counts': state_counts,
             'to_invoice_count': to_invoice_count,
             'late_count': late_count,
-            'ca_month': round(ca_month, 2),
+            'bc_month': round(bc_month, 2),
+            'invoice_sale': {
+                'total': round(sale_paid + sale_unpaid, 2),
+                'paid': round(sale_paid, 2),
+                'unpaid': round(sale_unpaid, 2),
+            },
             'daily_sales': daily_sales,
             'active_orders': active_orders,
             'recent_order_count': recent_order_count,

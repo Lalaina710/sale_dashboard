@@ -4,7 +4,7 @@
     'category': 'Sales',
     'summary': 'Dashboard Ventes dynamique avec KPI, filtres et configuration',
     'description': 'Tableau de bord interactif pour le suivi des ventes avec filtres dynamiques, rafraîchissement auto et configuration.',
-    'author': 'SOPROMER',
+    'author': 'MadaWebZone MWZ',
     'depends': ['sale_management'],
     'data': [
         'security/sale_dashboard_groups.xml',

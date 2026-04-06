@@ -173,7 +173,8 @@
 .sale_dashboard .kpi-card.done { border-left-color: #6f42c1; }
 .sale_dashboard .kpi-card.cancel { border-left-color: #adb5bd; }
 .sale_dashboard .kpi-card.late { border-left-color: #dc3545; }
-.sale_dashboard .kpi-card.ca_month { border-left-color: #0dcaf0; }
+.sale_dashboard .kpi-card.bc_month { border-left-color: #0dcaf0; }
+.sale_dashboard .kpi-card.invoice_sale { border-left-color: #198754; }
 
 .sale_dashboard .kpi-value {
     font-size: 2.2rem;
@@ -194,7 +195,18 @@
 .sale_dashboard .kpi-card.done .kpi-value { color: #6f42c1; }
 .sale_dashboard .kpi-card.cancel .kpi-value { color: #adb5bd; }
 .sale_dashboard .kpi-card.late .kpi-value { color: #dc3545; }
-.sale_dashboard .kpi-card.ca_month .kpi-value { color: #0dcaf0; font-size: 1.6rem; }
+.sale_dashboard .kpi-card.bc_month .kpi-value { color: #0dcaf0; font-size: 1.6rem; }
+.sale_dashboard .kpi-card.invoice_sale .kpi-value { color: #198754; font-size: 1.6rem; }
+
+.sale_dashboard .kpi-detail {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.sale_dashboard .kpi-detail .kpi-paid { color: #198754; }
+.sale_dashboard .kpi-detail .kpi-unpaid { color: #dc3545; }
 
 /* === Sections === */
 .sale_dashboard .db-section {

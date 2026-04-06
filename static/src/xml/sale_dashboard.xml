@@ -153,9 +153,17 @@
                         <div class="kpi-value" t-esc="state.data.late_count || 0"/>
                         <div class="kpi-label">En retard</div>
                     </div>
-                    <div class="kpi-card ca_month">
-                        <div class="kpi-value" t-esc="formatAmount(state.data.ca_month)"/>
-                        <div class="kpi-label">CA ce mois</div>
+                    <div class="kpi-card bc_month">
+                        <div class="kpi-value" t-esc="formatAmount(state.data.bc_month)"/>
+                        <div class="kpi-label">Total BC</div>
+                    </div>
+                    <div class="kpi-card invoice_sale">
+                        <div class="kpi-value" t-esc="formatAmount((state.data.invoice_sale || {}).total)"/>
+                        <div class="kpi-label">Fact. Vente</div>
+                        <div class="kpi-detail">
+                            <span class="kpi-paid">Payé: <t t-esc="formatAmount((state.data.invoice_sale || {}).paid)"/></span>
+                            <span class="kpi-unpaid">Non payé: <t t-esc="formatAmount((state.data.invoice_sale || {}).unpaid)"/></span>
+                        </div>
                     </div>
                 </div>
 
