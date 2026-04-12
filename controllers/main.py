@@ -114,13 +114,15 @@ class SaleDashboardController(http.Controller):
         chart_groups = SO.read_group(chart_domain, fields=['amount_total:sum', 'date_order'], groupby=['date_order:day'])
         chart_by_date = {}
         for g in chart_groups:
-            dk = g.get('date_order:day', '')
-            if dk:
-                chart_by_date[dk] = {'amount': round(g.get('amount_total', 0), 2), 'count': g.get('__count', 0)}
+            rng = g.get('__range', {}).get('date_order:day', {})
+            from_str = rng.get('from', '')
+            if from_str:
+                day_key = from_str[:10]  # 'YYYY-MM-DD'
+                chart_by_date[day_key] = {'amount': round(g.get('amount_total', 0), 2), 'count': g.get('__count', 0)}
         daily_sales = []
         for i in range(chart_days - 1, -1, -1):
             day = now - timedelta(days=i)
-            day_key = day.strftime('%d %b %Y')
+            day_key = day.strftime('%Y-%m-%d')
             data = chart_by_date.get(day_key, {})
             daily_sales.append({
                 'date': day.strftime('%d/%m'),
