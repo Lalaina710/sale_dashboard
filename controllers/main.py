@@ -1,6 +1,7 @@
-from odoo import http
+# Modified by: odoo-backend agent — 2026-04-13 — Fix bc_month, timezone, perf, currency
+from odoo import fields, http
 from odoo.http import request
-from datetime import datetime, timedelta
+from datetime import timedelta
 from werkzeug.exceptions import Forbidden
 
 
@@ -55,17 +56,18 @@ class SaleDashboardController(http.Controller):
         late_count = SO.search_count(base_domain + [
             ('state', '=', 'sale'),
             ('commitment_date', '!=', False),
-            ('commitment_date', '<', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            ('commitment_date', '<', fields.Datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
         ])
 
         # Total BC (Bons de Commande)
-        today = datetime.now()
+        today = fields.Datetime.now()
         month_start = today.replace(day=1, hour=0, minute=0, second=0)
-        bc_domain = base_domain + date_domain + [
+        bc_date_domain = date_domain if date_domain else [('date_order', '>=', month_start.strftime('%Y-%m-%d %H:%M:%S'))]
+        bc_domain = base_domain + bc_date_domain + [
             ('state', 'in', ['sale', 'done']),
         ]
-        month_orders = SO.search_read(bc_domain, fields=['amount_total'])
-        bc_month = sum(o['amount_total'] for o in month_orders)
+        bc_groups = SO.read_group(bc_domain, fields=['amount_total:sum'], groupby=[])
+        bc_month = bc_groups[0].get('amount_total', 0) if bc_groups else 0
 
         # Facturation Vente ce mois (factures clients, payé et non payé)
         Invoice = request.env['account.move']
@@ -91,7 +93,7 @@ class SaleDashboardController(http.Controller):
         sale_unpaid = sum(inv['amount_total'] for inv in all_invoices if inv['payment_state'] not in ('paid', 'in_payment'))
 
         # Ventes des N derniers jours (pour stats récapitulatives)
-        date_n_ago = datetime.now() - timedelta(days=recent_days)
+        date_n_ago = fields.Datetime.now() - timedelta(days=recent_days)
         recent_orders = SO.search_read(
             base_domain + [
                 ('state', 'in', ['sale', 'done']),
@@ -102,23 +104,28 @@ class SaleDashboardController(http.Controller):
         recent_order_count = len(recent_orders)
         recent_ca = sum(o['amount_total'] for o in recent_orders)
 
-        # Ventes par jour (N derniers jours) - graphique
+        # Ventes par jour (N derniers jours) - graphique (optimisé read_group)
+        now = fields.Datetime.now()
+        chart_start = (now - timedelta(days=chart_days - 1)).strftime('%Y-%m-%d 00:00:00')
+        chart_domain = base_domain + [
+            ('state', 'in', ['sale', 'done']),
+            ('date_order', '>=', chart_start),
+        ]
+        chart_groups = SO.read_group(chart_domain, fields=['amount_total:sum', 'date_order'], groupby=['date_order:day'])
+        chart_by_date = {}
+        for g in chart_groups:
+            dk = g.get('date_order:day', '')
+            if dk:
+                chart_by_date[dk] = {'amount': round(g.get('amount_total', 0), 2), 'count': g.get('__count', 0)}
         daily_sales = []
         for i in range(chart_days - 1, -1, -1):
-            day = datetime.now() - timedelta(days=i)
-            day_start = day.replace(hour=0, minute=0, second=0).strftime('%Y-%m-%d %H:%M:%S')
-            day_end = day.replace(hour=23, minute=59, second=59).strftime('%Y-%m-%d %H:%M:%S')
-            domain = base_domain + [
-                ('state', 'in', ['sale', 'done']),
-                ('date_order', '>=', day_start),
-                ('date_order', '<=', day_end),
-            ]
-            orders = SO.search_read(domain, fields=['amount_total'])
-            amount = sum(o['amount_total'] for o in orders)
+            day = now - timedelta(days=i)
+            day_key = day.strftime('%d %b %Y')
+            data = chart_by_date.get(day_key, {})
             daily_sales.append({
                 'date': day.strftime('%d/%m'),
-                'count': len(orders),
-                'amount': round(amount, 2),
+                'count': data.get('count', 0),
+                'amount': data.get('amount', 0),
             })
 
         # Commandes actives (brouillon, envoyé, confirmé)
