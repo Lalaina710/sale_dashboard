@@ -85,11 +85,12 @@ class SaleDashboardController(http.Controller):
         bc_groups = SO.read_group(bc_domain, fields=['amount_total:sum'], groupby=[])
         bc_month = bc_groups[0].get('amount_total', 0) if bc_groups else 0
 
-        # Facturation Vente ce mois (factures clients, payé et non payé)
+        # Facturation Vente ce mois (factures clients hors POS, payé et non payé)
         Invoice = request.env['account.move']
         invoice_domain = [
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
+            ('pos_order_ids', '=', False),
         ]
         if date_from_date:
             invoice_domain.append(('invoice_date', '>=', date_from_date))
@@ -128,6 +129,7 @@ class SaleDashboardController(http.Controller):
         chart_inv_domain = [
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
+            ('pos_order_ids', '=', False),
             ('invoice_date', '>=', chart_start_date),
         ]
         if user_id:
@@ -208,6 +210,7 @@ class SaleDashboardController(http.Controller):
         inv_list_domain = [
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
+            ('pos_order_ids', '=', False),
         ]
         if date_from_date:
             inv_list_domain.append(('invoice_date', '>=', date_from_date))

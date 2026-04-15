@@ -1,8 +1,13 @@
 .sale_dashboard {
     padding: 20px;
     background-color: #f8f9fa;
-    min-height: 100vh;
-    height: auto;
+    height: calc(100vh - 46px);
+    overflow-y: auto;
+}
+/* Force parent Odoo containers to allow scroll */
+.o_action_manager .o_action.sale_dashboard,
+.o_action_manager .o_action > .sale_dashboard {
+    height: calc(100vh - 46px);
     overflow-y: auto;
 }
 .sale_dashboard .db-title {
@@ -218,7 +223,6 @@
     margin-bottom: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     max-height: none;
-    overflow-y: visible;
 }
 .sale_dashboard .db-section-title {
     font-size: 1.1rem;
