@@ -120,26 +120,33 @@ class SaleDashboardController(http.Controller):
         recent_order_count = len(recent_orders)
         recent_ca = sum(o['amount_total'] for o in recent_orders)
 
-        # Ventes par jour (N derniers jours) - graphique (optimisé read_group)
+        # CA quotidien (factures clients par jour) - graphique
         now = fields.Datetime.now()
-        chart_start = (now - timedelta(days=chart_days - 1)).strftime('%Y-%m-%d 00:00:00')
-        chart_domain = base_domain + [
-            ('state', 'in', ['sale', 'done']),
-            ('date_order', '>=', chart_start),
-        ]
-        chart_groups = SO.read_group(chart_domain, fields=['amount_total:sum', 'date_order'], groupby=['date_order:day'])
         user_tz = pytz.timezone(request.env.user.tz or 'Indian/Antananarivo')
+        now_local = now.replace(tzinfo=pytz.utc).astimezone(user_tz)
+        chart_start_date = (now_local - timedelta(days=chart_days - 1)).strftime('%Y-%m-%d')
+        chart_inv_domain = [
+            ('move_type', '=', 'out_invoice'),
+            ('state', '=', 'posted'),
+            ('invoice_date', '>=', chart_start_date),
+        ]
+        if user_id:
+            chart_inv_domain.append(('invoice_user_id', '=', user_id))
+        if partner_id:
+            chart_inv_domain.append(('partner_id', '=', partner_id))
+        chart_groups = Invoice.read_group(
+            chart_inv_domain,
+            fields=['amount_total:sum', 'invoice_date'],
+            groupby=['invoice_date:day'],
+        )
         chart_by_date = {}
         for g in chart_groups:
-            rng = g.get('__range', {}).get('date_order:day', {})
+            rng = g.get('__range', {}).get('invoice_date:day', {})
             from_str = rng.get('from', '')
             if from_str:
-                utc_dt = datetime.strptime(from_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
-                local_dt = utc_dt.astimezone(user_tz)
-                day_key = local_dt.strftime('%Y-%m-%d')
+                day_key = from_str[:10]  # invoice_date is a Date field, no TZ conversion needed
                 chart_by_date[day_key] = {'amount': round(g.get('amount_total', 0), 2), 'count': g.get('__count', 0)}
         daily_sales = []
-        now_local = now.replace(tzinfo=pytz.utc).astimezone(user_tz)
         for i in range(chart_days - 1, -1, -1):
             day = now_local - timedelta(days=i)
             day_key = day.strftime('%Y-%m-%d')

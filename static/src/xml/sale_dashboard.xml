@@ -173,7 +173,7 @@
                         <div class="db-section">
                             <div class="db-section-title">
                                 <i class="fa fa-bar-chart me-2"/>
-                                Ventes <t t-esc="state.filters.chart_days"/> derniers jours
+                                CA quotidien
                                 <span class="float-end text-muted" style="font-size:0.85rem;">
                                     <t t-esc="state.filters.recent_days"/>j:
                                     <strong t-esc="state.data.recent_order_count"/> cmd
