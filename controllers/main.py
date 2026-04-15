@@ -226,7 +226,6 @@ class SaleDashboardController(http.Controller):
                 'amount_total', 'payment_state', 'invoice_user_id',
             ],
             order='invoice_date desc, name desc',
-            limit=100,
         )
 
         # Config pour le frontend
