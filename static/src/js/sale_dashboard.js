@@ -25,6 +25,7 @@ class SaleDashboard extends Component {
                 recent_order_count: 0,
                 recent_ca: 0,
                 top_products: [],
+                daily_invoices: [],
             },
             // Filtres dynamiques
             filters: {
@@ -112,6 +113,7 @@ class SaleDashboard extends Component {
                 recent_order_count: 0,
                 recent_ca: 0,
                 top_products: [],
+                daily_invoices: [],
             };
         }
         this.state.loading = false;
@@ -278,6 +280,16 @@ class SaleDashboard extends Component {
                 ["state", "=", "sale"],
                 ["commitment_date", "<", new Date().toISOString()],
             ],
+            target: "current",
+        });
+    }
+
+    openInvoice(invoiceId) {
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            res_model: "account.move",
+            res_id: invoiceId,
+            views: [[false, "form"]],
             target: "current",
         });
     }

@@ -203,6 +203,32 @@ class SaleDashboardController(http.Controller):
                 for p in top_products_data if p['product_id']
             ]
 
+        # Factures du jour (par défaut) ou de la période filtrée
+        today_date = now_local.strftime('%Y-%m-%d')
+        inv_list_domain = [
+            ('move_type', '=', 'out_invoice'),
+            ('state', '=', 'posted'),
+        ]
+        if date_from_date:
+            inv_list_domain.append(('invoice_date', '>=', date_from_date))
+        else:
+            inv_list_domain.append(('invoice_date', '=', today_date))
+        if date_to_date:
+            inv_list_domain.append(('invoice_date', '<=', date_to_date))
+        if user_id:
+            inv_list_domain.append(('invoice_user_id', '=', user_id))
+        if partner_id:
+            inv_list_domain.append(('partner_id', '=', partner_id))
+        daily_invoices = Invoice.search_read(
+            inv_list_domain,
+            fields=[
+                'name', 'partner_id', 'invoice_date', 'amount_untaxed',
+                'amount_total', 'payment_state', 'invoice_user_id',
+            ],
+            order='invoice_date desc, name desc',
+            limit=100,
+        )
+
         # Config pour le frontend
         config = request.env['sale.dashboard.config'].get_config()
 
@@ -229,6 +255,7 @@ class SaleDashboardController(http.Controller):
             'recent_order_count': recent_order_count,
             'recent_ca': round(recent_ca, 2),
             'top_products': top_products,
+            'daily_invoices': daily_invoices,
             'config': config,
         }
 

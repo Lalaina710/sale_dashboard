@@ -232,8 +232,53 @@
                         </div>
                     </div>
 
-                    <!-- Active orders table -->
+                    <!-- Daily invoices + Active orders -->
                     <div class="db-col">
+                        <!-- Factures du jour -->
+                        <div class="db-section">
+                            <div class="db-section-title">
+                                <i class="fa fa-file-text-o me-2"/>Factures du jour
+                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                    <t t-esc="(state.data.daily_invoices || []).length"/> factures
+                                </span>
+                            </div>
+                            <t t-if="state.data.daily_invoices and state.data.daily_invoices.length">
+                                <table class="mo-table">
+                                    <thead>
+                                        <tr>
+                                            <th>N° Facture</th>
+                                            <th>Client</th>
+                                            <th>Date</th>
+                                            <th class="text-end">HT</th>
+                                            <th class="text-end">TTC</th>
+                                            <th>Paiement</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.data.daily_invoices" t-as="inv" t-key="inv.id">
+                                            <tr t-on-click="() => this.openInvoice(inv.id)" style="cursor:pointer;">
+                                                <td t-esc="inv.name"/>
+                                                <td t-esc="inv.partner_id ? inv.partner_id[1] : '-'"/>
+                                                <td t-esc="inv.invoice_date"/>
+                                                <td class="text-end" t-esc="formatAmount(inv.amount_untaxed)"/>
+                                                <td class="text-end" t-esc="formatAmount(inv.amount_total)"/>
+                                                <td>
+                                                    <span t-attf-class="badge-invoice badge-{{ inv.payment_state === 'paid' || inv.payment_state === 'in_payment' ? 'invoiced' : 'to_invoice' }}">
+                                                        <t t-if="inv.payment_state === 'paid' or inv.payment_state === 'in_payment'">Payé</t>
+                                                        <t t-else="">Non payé</t>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="text-muted text-center p-3">Aucune facture</div>
+                            </t>
+                        </div>
+
+                        <!-- Commandes actives -->
                         <div class="db-section">
                             <div class="db-section-title">
                                 <i class="fa fa-shopping-cart me-2"/>Commandes actives
