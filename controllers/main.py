@@ -22,7 +22,11 @@ class SaleDashboardController(http.Controller):
         date_from = filters.get('date_from')
         date_to = filters.get('date_to')
 
-        # Convert date_from/date_to to UTC boundaries (user timezone)
+        # Keep original date strings for Date fields (invoice_date)
+        date_from_date = date_from
+        date_to_date = date_to
+
+        # Convert date_from/date_to to UTC boundaries for Datetime fields (date_order)
         _ftz = pytz.timezone(request.env.user.tz or 'Indian/Antananarivo')
         if date_from and len(date_from) == 10:
             _df_local = _ftz.localize(datetime.strptime(date_from, '%Y-%m-%d'))
@@ -87,12 +91,12 @@ class SaleDashboardController(http.Controller):
             ('move_type', '=', 'out_invoice'),
             ('state', '=', 'posted'),
         ]
-        if date_from:
-            invoice_domain.append(('invoice_date', '>=', date_from))
+        if date_from_date:
+            invoice_domain.append(('invoice_date', '>=', date_from_date))
         else:
             invoice_domain.append(('invoice_date', '>=', month_start.strftime('%Y-%m-%d')))
-        if date_to:
-            invoice_domain.append(('invoice_date', '<=', date_to))
+        if date_to_date:
+            invoice_domain.append(('invoice_date', '<=', date_to_date))
         if user_id:
             invoice_domain.append(('invoice_user_id', '=', user_id))
         if partner_id:
