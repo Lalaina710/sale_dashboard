@@ -222,7 +222,13 @@
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    max-height: 500px;
+    overflow-y: auto;
+}
+/* Chart section needs no scroll */
+.sale_dashboard .db-section:has(.chart-container) {
     max-height: none;
+    overflow-y: visible;
 }
 .sale_dashboard .db-section-title {
     font-size: 1.1rem;
