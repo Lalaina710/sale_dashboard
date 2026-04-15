@@ -1,7 +1,8 @@
 # Modified by: odoo-backend agent — 2026-04-13 — Fix bc_month, timezone, perf, currency
 from odoo import fields, http
 from odoo.http import request
-from datetime import timedelta
+from datetime import timedelta, datetime
+import pytz
 from werkzeug.exceptions import Forbidden
 
 
@@ -20,6 +21,15 @@ class SaleDashboardController(http.Controller):
         active_order_limit = filters.get('active_order_limit', 50)
         date_from = filters.get('date_from')
         date_to = filters.get('date_to')
+
+        # Convert date_from/date_to to UTC boundaries (user timezone)
+        _ftz = pytz.timezone(request.env.user.tz or 'Indian/Antananarivo')
+        if date_from and len(date_from) == 10:
+            _df_local = _ftz.localize(datetime.strptime(date_from, '%Y-%m-%d'))
+            date_from = _df_local.astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
+        if date_to and len(date_to) == 10:
+            _dt_local = _ftz.localize(datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
+            date_to = _dt_local.astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
         user_id = filters.get('user_id')
         partner_id = filters.get('partner_id')
 
@@ -60,8 +70,10 @@ class SaleDashboardController(http.Controller):
         ])
 
         # Total BC (Bons de Commande)
+        _tz_sale = pytz.timezone(request.env.user.tz or "Indian/Antananarivo")
         today = fields.Datetime.now()
-        month_start = today.replace(day=1, hour=0, minute=0, second=0)
+        today_local = today.replace(tzinfo=pytz.utc).astimezone(_tz_sale)
+        month_start = today_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0).astimezone(pytz.utc)
         bc_date_domain = date_domain if date_domain else [('date_order', '>=', month_start.strftime('%Y-%m-%d %H:%M:%S'))]
         bc_domain = base_domain + bc_date_domain + [
             ('state', 'in', ['sale', 'done']),
@@ -112,16 +124,20 @@ class SaleDashboardController(http.Controller):
             ('date_order', '>=', chart_start),
         ]
         chart_groups = SO.read_group(chart_domain, fields=['amount_total:sum', 'date_order'], groupby=['date_order:day'])
+        user_tz = pytz.timezone(request.env.user.tz or 'Indian/Antananarivo')
         chart_by_date = {}
         for g in chart_groups:
             rng = g.get('__range', {}).get('date_order:day', {})
             from_str = rng.get('from', '')
             if from_str:
-                day_key = from_str[:10]  # 'YYYY-MM-DD'
+                utc_dt = datetime.strptime(from_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc)
+                local_dt = utc_dt.astimezone(user_tz)
+                day_key = local_dt.strftime('%Y-%m-%d')
                 chart_by_date[day_key] = {'amount': round(g.get('amount_total', 0), 2), 'count': g.get('__count', 0)}
         daily_sales = []
+        now_local = now.replace(tzinfo=pytz.utc).astimezone(user_tz)
         for i in range(chart_days - 1, -1, -1):
-            day = now - timedelta(days=i)
+            day = now_local - timedelta(days=i)
             day_key = day.strftime('%Y-%m-%d')
             data = chart_by_date.get(day_key, {})
             daily_sales.append({
