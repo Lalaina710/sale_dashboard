@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates xml:space="preserve">
     <t t-name="sale_dashboard.SaleDashboard">
-        <div class="sale_dashboard">
+        <div t-attf-class="sale_dashboard {{ state.darkMode ? 'dark-mode' : '' }}">
             <!-- Header avec contrôles -->
             <div class="db-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -36,6 +36,10 @@
                             <i class="fa fa-filter"/>
                             Filtres
                             <span class="filter-dot" t-if="hasActiveFilters()"/>
+                        </button>
+
+                        <button class="btn-theme" t-on-click="toggleTheme">
+                            <i t-attf-class="fa {{ state.darkMode ? 'fa-sun-o' : 'fa-moon-o' }}"/>
                         </button>
 
                         <button class="btn-refresh" t-on-click="() => this.loadData()">
@@ -174,7 +178,7 @@
                             <div class="db-section-title">
                                 <i class="fa fa-bar-chart me-2"/>
                                 CA quotidien
-                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                <span class="float-end section-meta">
                                     <t t-esc="state.filters.recent_days"/>j:
                                     <strong t-esc="state.data.recent_order_count"/> cmd
                                     / <strong t-esc="formatAmount(state.data.recent_ca)"/>
@@ -198,11 +202,12 @@
                         <div class="db-section">
                             <div class="db-section-title">
                                 <i class="fa fa-trophy me-2"/>Top 10 produits vendus
-                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                <span class="float-end section-meta">
                                     Période : <t t-esc="state.filters.recent_days"/> jours
                                 </span>
                             </div>
                             <t t-if="state.data.top_products.length">
+                              <div class="table-wrapper">
                                 <table class="mo-table">
                                     <thead>
                                         <tr>
@@ -225,9 +230,10 @@
                                         </t>
                                     </tbody>
                                 </table>
+                              </div>
                             </t>
                             <t t-else="">
-                                <div class="text-muted text-center p-3">Aucune vente sur la période</div>
+                                <div class="db-empty-state">Aucune vente sur la periode</div>
                             </t>
                         </div>
                     </div>
@@ -238,11 +244,12 @@
                         <div class="db-section">
                             <div class="db-section-title">
                                 <i class="fa fa-file-text-o me-2"/>Factures du jour
-                                <span class="float-end text-muted" style="font-size:0.85rem;">
+                                <span class="float-end section-meta">
                                     <t t-esc="(state.data.daily_invoices || []).length"/> factures
                                 </span>
                             </div>
                             <t t-if="state.data.daily_invoices and state.data.daily_invoices.length">
+                              <div class="table-wrapper">
                                 <table class="mo-table">
                                     <thead>
                                         <tr>
@@ -256,7 +263,7 @@
                                     </thead>
                                     <tbody>
                                         <t t-foreach="state.data.daily_invoices" t-as="inv" t-key="inv.id">
-                                            <tr t-on-click="() => this.openInvoice(inv.id)" style="cursor:pointer;">
+                                            <tr t-on-click="() => this.openInvoice(inv.id)">
                                                 <td t-esc="inv.name"/>
                                                 <td t-esc="inv.partner_id ? inv.partner_id[1] : '-'"/>
                                                 <td t-esc="inv.invoice_date"/>
@@ -272,9 +279,10 @@
                                         </t>
                                     </tbody>
                                 </table>
+                              </div>
                             </t>
                             <t t-else="">
-                                <div class="text-muted text-center p-3">Aucune facture</div>
+                                <div class="db-empty-state">Aucune facture</div>
                             </t>
                         </div>
 
@@ -282,11 +290,12 @@
                         <div class="db-section">
                             <div class="db-section-title">
                                 <i class="fa fa-shopping-cart me-2"/>Commandes actives
-                                <span class="float-end text-muted" style="font-size:0.85rem;">
-                                    <t t-esc="state.data.active_orders.length"/> affichées
+                                <span class="float-end section-meta">
+                                    <t t-esc="state.data.active_orders.length"/> affichees
                                 </span>
                             </div>
                             <t t-if="state.data.active_orders.length">
+                              <div class="table-wrapper">
                                 <table class="mo-table">
                                     <thead>
                                         <tr>
@@ -317,9 +326,10 @@
                                         </t>
                                     </tbody>
                                 </table>
+                              </div>
                             </t>
                             <t t-else="">
-                                <div class="text-muted text-center p-4">
+                                <div class="db-empty-state">
                                     <i class="fa fa-check-circle fa-2x mb-2 d-block text-success"/>
                                     Aucune commande active
                                 </div>

@@ -46,6 +46,8 @@ class SaleDashboard extends Component {
             autoRefreshInterval: 0,
             // Dernière mise à jour
             lastUpdate: '',
+            // Dark mode
+            darkMode: localStorage.getItem('sale_dashboard_dark') === 'true',
         });
         this._refreshTimer = null;
 
@@ -137,6 +139,11 @@ class SaleDashboard extends Component {
 
     applyFilters() {
         this.loadData();
+    }
+
+    toggleTheme() {
+        this.state.darkMode = !this.state.darkMode;
+        localStorage.setItem('sale_dashboard_dark', this.state.darkMode);
     }
 
     resetFilters() {
