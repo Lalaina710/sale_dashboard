@@ -1,6 +1,6 @@
 {
     'name': 'Tableau de bord Ventes',
-    'version': '18.0.2.0.0',
+    'version': '18.0.2.1.1',
     'category': 'Sales',
     'summary': 'Dashboard Ventes dynamique avec KPI, filtres et configuration',
     'description': 'Tableau de bord interactif pour le suivi des ventes avec filtres dynamiques, rafraîchissement auto et configuration.',

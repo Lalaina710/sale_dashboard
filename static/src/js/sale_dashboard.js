@@ -19,6 +19,7 @@ class SaleDashboard extends Component {
                 to_invoice_count: 0,
                 late_count: 0,
                 bc_month: 0,
+                qty_month: 0,
                 invoice_sale: { total: 0, paid: 0, unpaid: 0 },
                 daily_sales: [],
                 active_orders: [],
@@ -109,6 +110,7 @@ class SaleDashboard extends Component {
                 to_invoice_count: 0,
                 late_count: 0,
                 bc_month: 0,
+                qty_month: 0,
                 invoice_sale: { total: 0, paid: 0, unpaid: 0 },
                 daily_sales: [],
                 active_orders: [],
@@ -199,6 +201,14 @@ class SaleDashboard extends Component {
     formatQty(qty) {
         if (!qty) return "0";
         return Math.round(qty).toLocaleString("fr-FR");
+    }
+
+    formatQtyMonth(qty) {
+        if (!qty && qty !== 0) return "0";
+        return Number(qty).toLocaleString("fr-FR", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        });
     }
 
     getBarHeight(amount) {

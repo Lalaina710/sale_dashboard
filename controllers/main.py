@@ -85,6 +85,18 @@ class SaleDashboardController(http.Controller):
         bc_groups = SO.read_group(bc_domain, fields=['amount_total:sum'], groupby=[])
         bc_month = bc_groups[0].get('amount_total', 0) if bc_groups else 0
 
+        # Quantite totale du mois (somme product_uom_qty sur les memes SO que bc_month)
+        bc_so_ids = SO.search(bc_domain).ids
+        if bc_so_ids:
+            qty_month_groups = request.env['sale.order.line'].read_group(
+                [('order_id', 'in', bc_so_ids)],
+                fields=['product_uom_qty:sum'],
+                groupby=[],
+            )
+            qty_month = qty_month_groups[0].get('product_uom_qty', 0) if qty_month_groups else 0
+        else:
+            qty_month = 0
+
         # Facturation Vente ce mois (factures clients hors POS, payé et non payé)
         Invoice = request.env['account.move']
         invoice_domain = [
@@ -247,6 +259,7 @@ class SaleDashboardController(http.Controller):
             'to_invoice_count': to_invoice_count,
             'late_count': late_count,
             'bc_month': round(bc_month, 2),
+            'qty_month': round(qty_month, 2),
             'invoice_sale': {
                 'total': round(sale_paid + sale_unpaid, 2),
                 'paid': round(sale_paid, 2),
